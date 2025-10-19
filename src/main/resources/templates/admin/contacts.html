@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" th:content="${_csrf.token}"/>
+    <meta name="csrf-header" th:content="${_csrf.headerName}"/>
+    <title>Contact Management - F1RSTLOOK Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f7fa;
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-header h2 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-header .highlight {
+            color: #FF6D1FFF;
+        }
+        
+        .sidebar-header p {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+        
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .menu-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #FF6D1FFF;
+        }
+        
+        .menu-item.active {
+            background: rgba(255,255,255,0.15);
+            border-left-color: #FF6D1FFF;
+            font-weight: 600;
+        }
+        
+        .menu-item-icon {
+            font-size: 20px;
+            margin-right: 12px;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .menu-item-text {
+            flex: 1;
+        }
+        
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            padding: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            padding: 30px;
+            width: calc(100% - 260px);
+        }
+        
+        .top-bar {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            color: #333;
+        }
+        
+        .export-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s;
+        }
+        
+        .export-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-card.on-hold .number {
+            color: #dc3545;
+        }
+        
+        .stat-card.contacted .number {
+            color: #28a745;
+        }
+        
+        .content-area {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        table thead {
+            background: #f8f9fa;
+        }
+        
+        table th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        table td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .status-dropdown {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .status-dropdown.on-hold {
+            background: #fee;
+            border-color: #dc3545;
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .status-dropdown.contacted {
+            background: #efe;
+            border-color: #28a745;
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+        
+        .view-btn {
+            background: #667eea;
+            color: white;
+        }
+        
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+            font-size: 18px;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .detail-row {
+            margin-bottom: 15px;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>F<span class="highlight">1</span>RSTLOOK</h2>
+            <p>Admin Dashboard</p>
+        </div>
+        
+        <nav class="sidebar-menu">
+            <a href="/admin/dashboard" class="menu-item">
+                <span class="menu-item-icon">📊</span>
+                <span class="menu-item-text">Dashboard</span>
+            </a>
+            
+            <a href="/admin/contacts" class="menu-item active">
+                <span class="menu-item-icon">📧</span>
+                <span class="menu-item-text">Contacts</span>
+            </a>
+            
+            <a href="/admin/leads" class="menu-item">
+                <span class="menu-item-icon">🎯</span>
+                <span class="menu-item-text">Lead Scoring</span>
+            </a>
+            
+            <a href="/admin/analytics" class="menu-item">
+                <span class="menu-item-icon">📈</span>
+                <span class="menu-item-text">Form Analytics</span>
+            </a>
+            
+            <a href="/admin/visitors" class="menu-item">
+                <span class="menu-item-icon">👥</span>
+                <span class="menu-item-text">Visitors</span>
+            </a>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <a href="/admin/logout" class="logout-btn">
+                <span style="margin-right: 8px;">🚪</span>
+                <span>Logout</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-bar">
+            <h1 class="page-title">📧 Contact Management</h1>
+            <a href="/admin/contacts/export" class="export-btn">
+                <span>📥</span>
+                <span>Export to Excel</span>
+            </a>
+        </div>
+        
+        <div class="stats-cards">
+            <div class="stat-card">
+                <h3>Total Contacts</h3>
+                <div class="number" th:text="${totalCount}">0</div>
+            </div>
+            <div class="stat-card on-hold">
+                <h3>On Hold</h3>
+                <div class="number" th:text="${onHoldCount}">0</div>
+            </div>
+            <div class="stat-card contacted">
+                <h3>Contacted</h3>
+                <div class="number" th:text="${contactedCount}">0</div>
+            </div>
+        </div>
+        
+        <div class="content-area">
+            <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <button class="filter-btn active" onclick="filterContacts('all')">All (<span th:text="${totalCount}">0</span>)</button>
+                    <button class="filter-btn" onclick="filterContacts('ON_HOLD')">On Hold (<span th:text="${onHoldCount}">0</span>)</button>
+                    <button class="filter-btn" onclick="filterContacts('CONTACTED')">Contacted</button>
+                </div>
+                <div>
+                    <button id="sendToSelectedBtn" onclick="sendToSelected()" style="
+                        background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+                        color: white;
+                        padding: 12px 25px;
+                        border: none;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-size: 16px;
+                        font-weight: 600;
+                        box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
+                        display: none;
+                    ">
+                        📱 Send WhatsApp to Selected (<span id="selectedCount">0</span>)
+                    </button>
+                </div>
+            </div>
+            
+            <div th:if="${#lists.isEmpty(contacts)}" class="no-data">
+                No contacts yet
+            </div>
+            
+            <table th:if="${!#lists.isEmpty(contacts)}" id="contactsTable">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Mobile</th>
+                        <th>Subject</th>
+                        <th>Status</th>
+                        <th>Catalog</th>
+                        <th>Submitted</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="contact : ${contacts}" th:attr="data-status=${contact.status}">
+                        <td><input type="checkbox" class="contact-checkbox" th:attr="data-id=${contact.id},data-name=${contact.name},data-mobile=${contact.mobile}"></td>
+                        <td th:text="${contact.id}">1</td>
+                        <td th:text="${contact.name}">John Doe</td>
+                        <td th:text="${contact.email}">john@example.com</td>
+                        <td th:text="${contact.mobile}">1234567890</td>
+                        <td th:text="${contact.subject}">Inquiry</td>
+                        <td>
+                            <select class="status-dropdown" 
+                                    th:classappend="${contact.status == 'ON_HOLD'} ? 'on-hold' : 'contacted'"
+                                    th:attr="data-id=${contact.id}"
+                                    onchange="updateStatus(this)">
+                                <option value="ON_HOLD" th:selected="${contact.status == 'ON_HOLD'}">On Hold</option>
+                                <option value="CONTACTED" th:selected="${contact.status == 'CONTACTED'}">Contacted</option>
+                            </select>
+                        </td>
+                        <td>
+                            <span th:if="${contact.catalogOpened != null and contact.catalogOpened}" style="color: #28a745; font-weight: 600;">
+                                ✅ Opened
+                            </span>
+                            <span th:if="${contact.catalogSendFailed != null and contact.catalogSendFailed}" style="color: #dc3545; font-weight: 600;" 
+                                  th:title="${contact.catalogFailureReason}">
+                                ❌ Failed
+                            </span>
+                            <span th:if="${(contact.catalogOpened == null or !contact.catalogOpened) and (contact.catalogSendFailed == null or !contact.catalogSendFailed)}" style="color: #ffc107; font-weight: 600;">
+                                ⏳ Pending
+                            </span>
+                        </td>
+                        <td th:text="${#temporals.format(contact.submittedAt, 'yyyy-MM-dd HH:mm')}">2025-01-01 10:00</td>
+                        <td>
+                            <button class="action-btn view-btn" th:onclick="'viewContact(' + ${contact.id} + ')'">View</button>
+                            <button class="action-btn whatsapp-btn" 
+                                    th:attr="data-id=${contact.id},data-name=${contact.name},data-mobile=${contact.mobile}"
+                                    onclick="sendWhatsAppFromButton(this)"
+                                    style="background: #25D366; color: white;">
+                                📱 WhatsApp
+                            </button>
+                            <button class="action-btn delete-btn" th:onclick="'deleteContact(' + ${contact.id} + ')'">Delete</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- View Modal -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Contact Details</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        const contacts = /*[[${contacts}]]*/ [];
+        
+        // Get CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="csrf-header"]').getAttribute('content');
+        
+        function updateStatus(select) {
+            const id = select.getAttribute('data-id');
+            const status = select.value;
+            
+            const formData = new URLSearchParams();
+            formData.append('id', id);
+            formData.append('status', status);
+            
+            fetch('/admin/contacts/update-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    [csrfHeader]: csrfToken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success === 'true') {
+                    // Update dropdown styling
+                    select.className = 'status-dropdown ' + (status === 'ON_HOLD' ? 'on-hold' : 'contacted');
+                    
+                    // Show success message
+                    alert('Status updated successfully!');
+                    
+                    // Reload page to update counts
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating status');
+            });
+        }
+        
+        function filterContacts(status) {
+            const rows = document.querySelectorAll('#contactsTable tbody tr');
+            const buttons = document.querySelectorAll('.filter-btn');
+            
+            // Update active button
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Filter rows
+            rows.forEach(row => {
+                if (status === 'all' || row.getAttribute('data-status') === status) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        function viewContact(id) {
+            const contact = contacts.find(c => c.id === id);
+            if (!contact) return;
+            
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <div class="detail-row">
+                    <div class="detail-label">Name:</div>
+                    <div class="detail-value">${contact.name}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Email:</div>
+                    <div class="detail-value">${contact.email}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Mobile:</div>
+                    <div class="detail-value">${contact.mobile}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Subject:</div>
+                    <div class="detail-value">${contact.subject}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Message:</div>
+                    <div class="detail-value">${contact.message}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Status:</div>
+                    <div class="detail-value">${contact.status === 'ON_HOLD' ? '🔴 On Hold' : '🟢 Contacted'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">IP Address:</div>
+                    <div class="detail-value">${contact.ipAddress || 'N/A'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Submitted At:</div>
+                    <div class="detail-value">${new Date(contact.submittedAt).toLocaleString()}</div>
+                </div>
+            `;
+            
+            document.getElementById('viewModal').classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('viewModal').classList.remove('show');
+        }
+        
+        function deleteContact(id) {
+            if (!confirm('Are you sure you want to delete this contact?')) {
+                return;
+            }
+            
+            fetch(`/admin/contacts/delete/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success === 'true') {
+                    alert('Contact deleted successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting contact');
+            });
+        }
+        
+        // Close modal on outside click
+        document.getElementById('viewModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+        
+        // Toggle select all checkboxes
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.contact-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll.checked;
+            });
+            updateSelectedCount();
+        }
+        
+        // Update selected count and show/hide button
+        function updateSelectedCount() {
+            const checkboxes = document.querySelectorAll('.contact-checkbox:checked');
+            const count = checkboxes.length;
+            document.getElementById('selectedCount').textContent = count;
+            document.getElementById('sendToSelectedBtn').style.display = count > 0 ? 'block' : 'none';
+        }
+        
+        // Add change listener to all checkboxes
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('.contact-checkbox');
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', updateSelectedCount);
+            });
+        });
+        
+        // Send WhatsApp from button (helper function)
+        function sendWhatsAppFromButton(button) {
+            const contactId = button.getAttribute('data-id');
+            const name = button.getAttribute('data-name');
+            const mobile = button.getAttribute('data-mobile');
+            sendWhatsApp(contactId, name, mobile);
+        }
+        
+        // Send WhatsApp to single contact
+        function sendWhatsApp(contactId, name, mobile) {
+            if (!mobile || mobile === 'null' || mobile === '') {
+                alert('No mobile number available for this contact!');
+                return;
+            }
+            
+            const message = encodeURIComponent(
+                `Hi ${name}! 👋\n\n` +
+                `Thank you for contacting F1RSTLOOK Digital!\n\n` +
+                `We received your inquiry and would love to help you.\n\n` +
+                `Here's our services catalog:\n` +
+                `https://wa.me/c/919494385675\n\n` +
+                `Feel free to browse and let us know if you have any questions!\n\n` +
+                `Best regards,\n` +
+                `F1RSTLOOK Digital Team`
+            );
+            
+            // Open WhatsApp
+            window.open(`https://wa.me/${mobile}?text=${message}`, '_blank');
+            
+            // Update status to CONTACTED
+            setTimeout(() => {
+                updateStatusAfterWhatsApp(contactId);
+            }, 1000);
+        }
+        
+        // Send WhatsApp to selected contacts
+        function sendToSelected() {
+            const checkboxes = document.querySelectorAll('.contact-checkbox:checked');
+            
+            if (checkboxes.length === 0) {
+                alert('Please select at least one contact!');
+                return;
+            }
+            
+            if (!confirm(`Send WhatsApp message to ${checkboxes.length} contact(s)?`)) {
+                return;
+            }
+            
+            const contacts = [];
+            checkboxes.forEach(cb => {
+                const id = cb.getAttribute('data-id');
+                const name = cb.getAttribute('data-name');
+                const mobile = cb.getAttribute('data-mobile');
+                
+                if (mobile && mobile !== 'null') {
+                    contacts.push({ id, name, mobile });
+                }
+            });
+            
+            if (contacts.length === 0) {
+                alert('No valid mobile numbers found in selected contacts!');
+                return;
+            }
+            
+            // Open WhatsApp for each contact with delay
+            contacts.forEach((contact, index) => {
+                setTimeout(() => {
+                    const message = encodeURIComponent(
+                        `Hi ${contact.name}! 👋\n\n` +
+                        `Thank you for contacting F1RSTLOOK Digital!\n\n` +
+                        `We received your inquiry and would love to help you.\n\n` +
+                        `Here's our services catalog:\n` +
+                        `https://wa.me/c/919494385675\n\n` +
+                        `Feel free to browse and let us know if you have any questions!\n\n` +
+                        `Best regards,\n` +
+                        `F1RSTLOOK Digital Team`
+                    );
+                    
+                    window.open(`https://wa.me/${contact.mobile}?text=${message}`, '_blank');
+                    
+                    // Update status to CONTACTED
+                    updateStatusAfterWhatsApp(contact.id);
+                }, index * 2000); // 2 second delay between each
+            });
+            
+            // Show success message
+            setTimeout(() => {
+                alert(`WhatsApp opened for ${contacts.length} contact(s). Status will be updated to "Contacted".`);
+                setTimeout(() => location.reload(), 3000);
+            }, contacts.length * 2000 + 1000);
+        }
+        
+        // Update status to CONTACTED after sending WhatsApp
+        function updateStatusAfterWhatsApp(contactId) {
+            const formData = new URLSearchParams();
+            formData.append('id', contactId);
+            formData.append('status', 'CONTACTED');
+            
+            fetch('/admin/contacts/update-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    [csrfHeader]: csrfToken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Status updated to CONTACTED for contact:', contactId);
+            })
+            .catch(error => {
+                console.error('Error updating status:', error);
+            });
+        }
+        /*]]>*/
+    </script>
+</body>
+</html>

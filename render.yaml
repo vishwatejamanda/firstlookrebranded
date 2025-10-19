@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: firstlook-digital
+    env: java
+    buildCommand: mvn clean package -DskipTests
+    startCommand: java -Xmx512m -jar target/firstlook-digital-1.0.0.jar
+    envVars:
+      - key: SERVER_PORT
+        value: 10000
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod

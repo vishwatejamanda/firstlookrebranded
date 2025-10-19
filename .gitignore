@@ -1,0 +1,28 @@
+# Node
+node_modules/
+dist/
+npm-debug.log
+
+# Java/Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.iml
+.DS_Store
+
+# Environment
+.env
+
+# Build
+build/
+coverage/
+
+# Database
+data/
