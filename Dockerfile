@@ -9,6 +9,6 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/firstlook-digital-1.0.0.jar app.jar
-EXPOSE 10000
-ENV PORT=10000
-ENTRYPOINT ["java", "-Xmx512m", "-jar", "app.jar"]
+EXPOSE 5000
+ENV PORT=5000
+ENTRYPOINT ["java", "-Xmx512m", "-Dserver.port=${PORT}", "-jar", "app.jar"]
