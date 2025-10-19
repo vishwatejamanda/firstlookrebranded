@@ -44,7 +44,7 @@ public class ContactManagementController {
     @PostMapping("/update-status")
     @ResponseBody
     public ResponseEntity<Map<String, String>> updateStatus(
-            @RequestParam Long id,
+            @RequestParam String id,
             @RequestParam String status) {
         
         Map<String, String> response = new HashMap<>();
@@ -84,7 +84,7 @@ public class ContactManagementController {
     
     @DeleteMapping("/delete/{id}")
     @ResponseBody
-    public ResponseEntity<Map<String, String>> deleteContact(@PathVariable Long id) {
+    public ResponseEntity<Map<String, String>> deleteContact(@PathVariable String id) {
         Map<String, String> response = new HashMap<>();
         
         try {

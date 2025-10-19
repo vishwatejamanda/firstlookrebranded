@@ -28,7 +28,7 @@ public class LeadScoringService {
     @Transactional
     public LeadScore calculateLeadScore(ContactMessage contactMessage) {
         LeadScore leadScore = new LeadScore();
-        leadScore.setContactMessage(contactMessage);
+        leadScore.setContactMessageId(contactMessage.getId());
         
         int score = 0;
         String ipAddress = contactMessage.getIpAddress();
@@ -93,16 +93,26 @@ public class LeadScoringService {
     public Map<String, Object> getLeadScoringAnalytics() {
         Map<String, Object> analytics = new HashMap<>();
         
-        List<Object[]> distribution = leadScoreRepository.getLeadQualityDistribution();
-        Map<String, Long> qualityMap = new HashMap<>();
-        for (Object[] row : distribution) {
-            qualityMap.put((String) row[0], (Long) row[1]);
-        }
+        List<LeadScore> allLeads = leadScoreRepository.findAll();
         
-        analytics.put("hotLeads", qualityMap.getOrDefault("HOT", 0L));
-        analytics.put("warmLeads", qualityMap.getOrDefault("WARM", 0L));
-        analytics.put("coldLeads", qualityMap.getOrDefault("COLD", 0L));
-        analytics.put("averageScore", leadScoreRepository.getAverageLeadScore());
+        long hotLeads = allLeads.stream().filter(l -> "HOT".equals(l.getQuality())).count();
+        long warmLeads = allLeads.stream().filter(l -> "WARM".equals(l.getQuality())).count();
+        long coldLeads = allLeads.stream().filter(l -> "COLD".equals(l.getQuality())).count();
+        
+        double averageScore = allLeads.stream()
+            .mapToInt(LeadScore::getScore)
+            .average()
+            .orElse(0.0);
+        
+        Map<String, Long> qualityMap = new HashMap<>();
+        qualityMap.put("HOT", hotLeads);
+        qualityMap.put("WARM", warmLeads);
+        qualityMap.put("COLD", coldLeads);
+        
+        analytics.put("hotLeads", hotLeads);
+        analytics.put("warmLeads", warmLeads);
+        analytics.put("coldLeads", coldLeads);
+        analytics.put("averageScore", averageScore);
         analytics.put("qualityDistribution", qualityMap);
         
         return analytics;

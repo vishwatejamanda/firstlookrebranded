@@ -42,7 +42,7 @@ public class ContactController {
     }
     
     @PostMapping("/catalog/track-open")
-    public ResponseEntity<Map<String, Object>> trackCatalogOpen(@RequestParam Long contactId) {
+    public ResponseEntity<Map<String, Object>> trackCatalogOpen(@RequestParam String contactId) {
         Map<String, Object> response = new HashMap<>();
         
         try {
@@ -66,7 +66,7 @@ public class ContactController {
     
     @PostMapping("/catalog/track-failed")
     public ResponseEntity<Map<String, Object>> trackCatalogFailed(
-            @RequestParam Long contactId,
+            @RequestParam String contactId,
             @RequestParam String reason) {
         Map<String, Object> response = new HashMap<>();
         
